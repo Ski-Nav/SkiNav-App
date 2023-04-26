@@ -8,33 +8,52 @@ import {
 } from "react-native";
 import React, { useContext, useEffect, useState } from "react";
 import MobileSafeView from "../../components/MobileSafeView";
-import { COLORS, FONTS, Resort, SCREENS } from "../../constants/constants";
+import {
+  COLORS,
+  FONTS,
+  Resort,
+  SCREENS,
+  SIZES,
+} from "../../constants/constants";
 import CustomDropdown from "../../components/styled/CustomDropdown/CustomDropdown";
 import { getAllResorts } from "../../services/ResortService";
 import { ResortContext } from "../../contexts/ResortContext";
 import { useNavigation } from "@react-navigation/native";
+import { displayError } from "../../helpers/helpers";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const HomeScreen = () => {
   const [pulledResorts, setPulledResorts] = useState<Resort[]>();
   const [selectedResort, setSelectedResort] = useState<Resort>();
+  const [didPullResorts, setDidPullResorts] = useState(false);
 
   const { currentResort, setCurrentResort } = useContext(ResortContext);
 
   const navigation = useNavigation<any>();
 
-  const fetchData = () => {
-    getAllResorts().then((resorts) => {
-      setPulledResorts(resorts);
-    });
+  const fetchResorts = () => {
+    setDidPullResorts(false);
+    getAllResorts()
+      .then((resorts) => {
+        setPulledResorts(resorts);
+        setDidPullResorts(true);
+      })
+      .catch((error: Error) => {
+        displayError(error);
+        setDidPullResorts(true);
+      });
   };
 
   const onPressStart = () => {
     if (!selectedResort) {
-      Alert.alert("Error", "Please select a valid resort")
+      Alert.alert("Error", "Please select a valid resort");
       return;
     }
-    if(selectedResort && !currentResort){
-      Alert.alert("FATAL ERROR", "Current Resort context is not updated. Please report this!")
+    if (selectedResort && !currentResort) {
+      Alert.alert(
+        "FATAL ERROR",
+        "Current Resort context is not updated. Please report this!"
+      );
       return;
     }
 
@@ -42,7 +61,7 @@ const HomeScreen = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchResorts();
   }, []);
 
   useEffect(() => {
@@ -51,25 +70,45 @@ const HomeScreen = () => {
 
   return (
     <MobileSafeView style={styles.container}>
-      <Text style={{ textAlign: "center" }}>
-        <Text style={styles.titleSki}>Ski</Text>
-        <Text style={styles.titleNav}>Nav</Text>
-      </Text>
-      <Text style={styles.subtitle}>Ski more. Stop less.</Text>
-      <View style={styles.dropdownContainer}>
-        {pulledResorts ? (
-          <CustomDropdown
-            displayProperty={"Name"}
-            setSelectedData={setSelectedResort}
-            data={pulledResorts}
-            defaultText={"Select a Resort"}
-          />
-        ) : (
-          <ActivityIndicator />
-        )}
+      <View style={{ flex: 2, justifyContent: "center" }}>
+        <Text style={{ textAlign: "center" }}>
+          <Text style={styles.titleSki}>Ski</Text>
+          <Text style={styles.titleNav}>Nav</Text>
+        </Text>
+
+        <Text style={styles.subtitle}>Ski more. Stop less.</Text>
+        <View style={styles.dropdownContainer}>
+          {didPullResorts ? (
+            pulledResorts ? (
+              <CustomDropdown
+                displayProperty={"Name"}
+                setSelectedData={setSelectedResort}
+                data={pulledResorts}
+                defaultText={"Select a Resort"}
+              />
+            ) : (
+              <>
+                <MaterialIcons
+                  onPress={fetchResorts}
+                  name="refresh"
+                  size={30}
+                  color="white"
+                  style={{ alignSelf: "center" }}
+                />
+              </>
+            )
+          ) : (
+            <ActivityIndicator />
+          )}
+        </View>
       </View>
+
       <View style={styles.startButtonContainer}>
-        <TouchableOpacity onPress={onPressStart} style={styles.startButton}>
+        <TouchableOpacity
+          disabled={selectedResort == undefined || selectedResort == null}
+          onPress={onPressStart}
+          style={{ ...styles.startButton, opacity: selectedResort ? 1 : 0 }}
+        >
           <Text style={styles.startButtonText}>Start</Text>
         </TouchableOpacity>
       </View>
@@ -100,15 +139,18 @@ const styles = StyleSheet.create({
   subtitle: {
     color: COLORS.gray,
     fontFamily: FONTS.Medium,
+    textAlign: "center",
     fontSize: 25,
   },
   dropdownContainer: {
-    height: 200,
-    justifyContent: "center",
+    marginTop: 80,
+    width: "100%",
     alignItems: "center",
   },
   startButtonContainer: {
-    marginTop: 60,
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   startButton: {
     backgroundColor: COLORS.blue,
@@ -119,6 +161,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.Bold,
     fontSize: 30,
     marginVertical: 5,
-    marginHorizontal: 30
+    marginHorizontal: 30,
   },
 });
