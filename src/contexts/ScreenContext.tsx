@@ -15,7 +15,6 @@ import * as Font from "expo-font";
 import { CustomFonts } from "../../assets/fonts";
 import { displayError } from "../helpers/helpers";
 
-
 type ScreenContextType = {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 };
@@ -43,15 +42,28 @@ export const ScreenProvider = ({ children }) => {
   }, []);
   return (
     <ScreenContext.Provider value={{ setLoading }}>
-      <ProgressLoader
-        visible={loading}
-        isModal={true}
-        isHUD={true}
-        hudColor={"#000000"}
-        color={"#FFFFFF"}
-      />
+      {assetsLoaded ? (
+        <>
+          <ProgressLoader
+            visible={loading}
+            isModal={true}
+            isHUD={true}
+            hudColor={"#000000"}
+            color={"#FFFFFF"}
+          />
 
-      {children}
+          {children}
+        </>
+      ) : (
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: COLORS.background,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        ></View>
+      )}
     </ScreenContext.Provider>
   );
 };

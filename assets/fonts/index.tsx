@@ -1,8 +1,8 @@
 export const CustomFonts = {
-    'Bold': require('./Oswald-Bold.ttf'),
-    'ExtraLight': require('./Oswald-ExtraLight.ttf'),
-    'Light': require('./Oswald-Light.ttf'),
-    'Medium': require('./Oswald-Medium.ttf'),
-    'Regular': require('./Oswald-Regular.ttf'),
-    'SemiBold': require('./Oswald-SemiBold.ttf'),
+    'Bold': require('../../assets/fonts/Oswald-Bold.ttf'),
+    'ExtraLight': require('../../assets/fonts/Oswald-ExtraLight.ttf'),
+    'Light': require('../../assets/fonts/Oswald-Light.ttf'),
+    'Medium': require('../../assets/fonts/Oswald-Medium.ttf'),
+    'Regular': require('../../assets/fonts/Oswald-Regular.ttf'),
+    'SemiBold': require('../../assets/fonts/Oswald-SemiBold.ttf'),
   };
