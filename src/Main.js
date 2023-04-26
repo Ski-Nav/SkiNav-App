@@ -5,7 +5,7 @@ about contexts is documented in the context folder.
 
 import { StyleSheet, Text, TextInput } from "react-native";
 import React from "react";
-import { UserProvider } from "./contexts/ResortContext";
+import { ResortProvider } from "./contexts/ResortContext";
 import { ScreenProvider } from "./contexts/ScreenContext";
 import AppNav from "./navigation/AppNav";
 
@@ -16,11 +16,11 @@ const Main = () => {
   TextInput.defaultProps = TextInput.defaultProps || {};
   TextInput.defaultProps.allowFontScaling = false;
   return (
-    <UserProvider>
+    <ResortProvider>
       <ScreenProvider>
         <AppNav/>
       </ScreenProvider>
-    </UserProvider>
+    </ResortProvider>
   );
 };
 

@@ -16,7 +16,6 @@ import {
   NavigationContainer,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { UserContext } from "../contexts/ResortContext";
 import { SCREENS } from "../constants/constants";
 import HomeScreen from "../screens/Home/HomeScreen";
 import NavigationScreen from "../screens/Navigation/NavigationScreen";

@@ -27,7 +27,8 @@ export const COLORS = {
   black: "#000000",
   gray: "#b7b7b7",
   white: "#ffffff",
-  blue: "#a4c2f4"
+  lightBlue: "#a4c2f4",
+  blue: "#455f8a"
 };
 
 export const SIZES = {

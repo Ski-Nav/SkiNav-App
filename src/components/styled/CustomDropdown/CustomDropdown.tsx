@@ -4,6 +4,7 @@ import React from "react";
 import { COLORS, FONTS } from "../../../constants/constants";
 import SelectDropdown from "../../DownloadedComponents/SelectDropdown";
 import { FontAwesome } from "@expo/vector-icons";
+import { formatError } from "../../../helpers/helpers";
 
 interface CustomDropdownProps {
   setSelectedData: React.Dispatch<React.SetStateAction<any>>;
@@ -13,6 +14,9 @@ interface CustomDropdownProps {
   defaultValue?:any;
 }
 const CustomDropdown = (props: CustomDropdownProps) => {
+  if(!props.data){
+    throw formatError("Dropdown Error", "Dropdown data is undefined")
+  }
   return (
     <SelectDropdown
       data={props.data}
@@ -54,7 +58,7 @@ const CustomDropdown = (props: CustomDropdownProps) => {
       }}
       buttonStyle={{
         width: "100%",
-        backgroundColor: COLORS.lightGray,
+        backgroundColor: COLORS.white,
         borderRadius: 15,
       }}
       defaultButtonText={props.defaultText}
@@ -86,7 +90,7 @@ const CustomDropdown = (props: CustomDropdownProps) => {
         fontSize: 17
       }}
       searchInputStyle={{
-        backgroundColor: COLORS.lightGray,
+        backgroundColor: COLORS.white,
         borderBottomWidth: 2,
         borderColor: COLORS.gray,
       }}

@@ -1,7 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
+import MapView from 'react-native-maps';
 
 const NavigationScreen = () => {
+  const [currentMap, setCurrentMap] = useState<ResortMap>()
   return (
     <View>
       <Text>NavigationScreen</Text>
@@ -11,4 +13,8 @@ const NavigationScreen = () => {
 
 export default NavigationScreen
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+  container: {
+    flex
+  }
+})

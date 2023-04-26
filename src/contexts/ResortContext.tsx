@@ -19,19 +19,19 @@ type ResortContextType = {
   setCurrentResort: React.Dispatch<React.SetStateAction<Resort>>;
 };
 
-export const UserContext = createContext<ResortContextType>({
+export const ResortContext = createContext<ResortContextType>({
   currentResort: undefined,
   setCurrentResort: undefined,
 });
 
-export const UserProvider = ({ children }) => {
+export const ResortProvider = ({ children }) => {
   const [currentResort, setCurrentResort] = useState<Resort>();
 
   return (
-    <UserContext.Provider
+    <ResortContext.Provider
       value={{ currentResort, setCurrentResort }}
     >
       {children}
-    </UserContext.Provider>
+    </ResortContext.Provider>
   );
 };
