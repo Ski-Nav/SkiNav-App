@@ -1,4 +1,4 @@
-package com.kyle1373.reactnativealexdemo.newarchitecture.modules;
+package com.skinav.skinav.newarchitecture.modules;
 
 import com.facebook.jni.HybridData;
 import com.facebook.react.ReactPackage;

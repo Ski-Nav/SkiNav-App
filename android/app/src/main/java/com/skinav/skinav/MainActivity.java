@@ -1,4 +1,4 @@
-package com.kyle1373.reactnativealexdemo;
+package com.skinav.skinav;
 
 import android.os.Build;
 import android.os.Bundle;

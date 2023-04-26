@@ -1,4 +1,4 @@
-package com.kyle1373.reactnativealexdemo.newarchitecture;
+package com.skinav.skinav.newarchitecture;
 
 import android.app.Application;
 import androidx.annotation.NonNull;
@@ -20,9 +20,9 @@ import com.facebook.react.fabric.EmptyReactNativeConfig;
 import com.facebook.react.fabric.FabricJSIModuleProvider;
 import com.facebook.react.fabric.ReactNativeConfig;
 import com.facebook.react.uimanager.ViewManagerRegistry;
-import com.kyle1373.reactnativealexdemo.BuildConfig;
-import com.kyle1373.reactnativealexdemo.newarchitecture.components.MainComponentsRegistry;
-import com.kyle1373.reactnativealexdemo.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
+import com.skinav.skinav.BuildConfig;
+import com.skinav.skinav.newarchitecture.components.MainComponentsRegistry;
+import com.skinav.skinav.newarchitecture.modules.MainApplicationTurboModuleManagerDelegate;
 import java.util.ArrayList;
 import java.util.List;
 

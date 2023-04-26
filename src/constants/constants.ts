@@ -11,7 +11,7 @@ export type Resort = {
   Name: string;
 };
 
-export type Map = {};
+export type ResortMap = {};
 
 export type Node = {};
 
@@ -23,9 +23,8 @@ export const SCREENS = {
 };
 
 export const COLORS = {
-  background: "#DDDDDD",
-  button: "#3d69ba",
-  login: "#A9D0F5",
+  background: "#222222",
+  black: "#000000"
 };
 
 export const SIZES = {
