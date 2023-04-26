@@ -1,9 +1,16 @@
 {
   "expo": {
-    "name": "react-native-alex-demo",
-    "slug": "react-native-alex-demo",
+    "name": "SkiNav",
+    "slug": "SkiNav",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -11,8 +18,12 @@
       "supportsTablet": false
     },
     "android": {
-      "package": "com.kyle1373.reactnativealexdemo"
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      },
+      "package": "com.skinav.skinav"
     }
   },
-  "name": "react-native-alex-demo"
+  "name": "SkiNav"
 }

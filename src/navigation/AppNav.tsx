@@ -16,46 +16,33 @@ import {
   NavigationContainer,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { UserContext } from "../contexts/UserContext";
+import { UserContext } from "../contexts/ResortContext";
 import { SCREENS } from "../constants/constants";
-import LoginScreen from "../screens/Login/LoginScreen";
 import HomeScreen from "../screens/Home/HomeScreen";
+import NavigationScreen from "../screens/Navigation/NavigationScreen";
 
 const Stack = createNativeStackNavigator();
 
 const AppNav = () => {
-  const { currentToken } = useContext(UserContext);
   return (
     <NavigationContainer>
-      {currentToken ? <AppStack /> : <AuthStack />}
+      <SkiStack/>
     </NavigationContainer>
   );
 };
 
-const AuthStack = () => {
-  console.log("Loading AuthStack");
+const SkiStack = () => {
+  console.log("Loading SkiNav");
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        gestureEnabled:false,
       }}
-      initialRouteName={SCREENS.Login}
+      initialRouteName={SCREENS.HomeScreen}
     >
-      <Stack.Screen name={SCREENS.Login} component={LoginScreen} />
-    </Stack.Navigator>
-  );
-};
-
-const AppStack = () => {
-  console.log("Loading AppStack");
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}
-      initialRouteName={SCREENS.Home}
-    >
-      <Stack.Screen name={SCREENS.Home} component={HomeScreen} />
+      <Stack.Screen name={SCREENS.HomeScreen} component={HomeScreen} />
+      <Stack.Screen name={SCREENS.NavigationScreen} component={NavigationScreen} />
     </Stack.Navigator>
   );
 };

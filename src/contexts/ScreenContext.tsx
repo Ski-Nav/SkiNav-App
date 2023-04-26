@@ -9,8 +9,12 @@ loaded. See UserContext.tsx for more information.
 import React, { useState, useEffect, createContext, useContext } from "react";
 import ProgressLoader from "rn-progress-loader";
 import { ActivityIndicator, SafeAreaView, View, Text } from "react-native";
-import { UserContext } from "./UserContext";
+import { UserContext } from "./ResortContext";
 import { COLORS } from "../constants/constants";
+import * as Font from "expo-font";
+import { CustomFonts } from "../../assets/fonts";
+import { displayError } from "../helpers/helpers";
+
 
 type ScreenContextType = {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
@@ -21,34 +25,33 @@ export const ScreenContext = createContext<ScreenContextType>({
 
 export const ScreenProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
-  const { isUserContextLoaded } = useContext(UserContext);
 
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+
+  const loadAssets = async () => {
+    console.log("Loading assets");
+    await Font.loadAsync(CustomFonts)
+      .then(() => {
+        console.log("Successfully loaded assets.");
+        setAssetsLoaded(true);
+      })
+      .catch((error: Error) => displayError(error));
+  };
+
+  useEffect(() => {
+    loadAssets();
+  }, []);
   return (
     <ScreenContext.Provider value={{ setLoading }}>
-      {isUserContextLoaded ? (
-        <>
-          <ProgressLoader
-            visible={loading}
-            isModal={true}
-            isHUD={true}
-            hudColor={"#000000"}
-            color={"#FFFFFF"}
-          />
+      <ProgressLoader
+        visible={loading}
+        isModal={true}
+        isHUD={true}
+        hudColor={"#000000"}
+        color={"#FFFFFF"}
+      />
 
-          {children}
-        </>
-      ) : (
-        <SafeAreaView
-          style={{
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: COLORS.background
-          }}
-        >
-          <ActivityIndicator size="small" />
-        </SafeAreaView>
-      )}
+      {children}
     </ScreenContext.Provider>
   );
 };

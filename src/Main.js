@@ -5,7 +5,7 @@ about contexts is documented in the context folder.
 
 import { StyleSheet, Text, TextInput } from "react-native";
 import React from "react";
-import { UserProvider } from "./contexts/UserContext";
+import { UserProvider } from "./contexts/ResortContext";
 import { ScreenProvider } from "./contexts/ScreenContext";
 import AppNav from "./navigation/AppNav";
 
