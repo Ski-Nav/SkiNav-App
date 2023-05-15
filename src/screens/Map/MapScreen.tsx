@@ -10,7 +10,7 @@ import {
   Alert,
 } from "react-native";
 import React, { useContext, useEffect, useState } from "react";
-import MapView from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
 import { COLORS, FONTS, SIZES } from "../../constants/constants";
 import { ScreenContext } from "../../contexts/ScreenContext";
 import { ResortContext } from "../../contexts/ResortContext";
@@ -20,7 +20,12 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
 import { SkiNavigator } from "../../routing/SkiNavigator";
 import { useNavigation } from "@react-navigation/native";
-
+import { Edge } from "../../routing/edge";
+import { Node } from "../../routing/node";
+import {
+  MapViewWithHeading,
+  ArrowedPolyline,
+} from "react-native-maps-line-arrow";
 
 const NavigationScreen = () => {
   const { setLoading } = useContext(ScreenContext);
@@ -30,26 +35,30 @@ const NavigationScreen = () => {
   const [mediumSelected, setMediumSelected] = useState(false);
   const [hardSelected, setHardSelected] = useState(false);
 
-  const skiNavigator = new SkiNavigator()
+  const skiNavigator = new SkiNavigator();
+  const [graph, setGraph] = useState<{
+    [fromId: string]: { [toId: string]: Edge };
+  }>(null);
+  const [nodes, setNodes] = useState<{ [id: string]: Node }>(null);
+  const [edges, setEdges] = useState<{ [name: string]: Edge }>(null);
+  const [region, setRegion] = useState<any>(null);
 
   const navigation = useNavigation<any>();
   const { currentResort } = useContext(ResortContext);
 
-  const onStartPressed = () => {
-
-  }
+  const onStartPressed = () => {};
 
   const onExitPressed = () => {
     Alert.alert(
-      'Exit Resort',
+      "Exit Resort",
       `Are you sure you want to exit ${currentResort}?`,
       [
         {
-          text: 'No',
-          style: 'cancel',
+          text: "No",
+          style: "cancel",
         },
         {
-          text: 'Yes',
+          text: "Yes",
           onPress: () => navigation.pop(),
         },
       ],
@@ -57,10 +66,61 @@ const NavigationScreen = () => {
     );
   };
 
-  useEffect(() => {
-    skiNavigator.requestGraph(currentResort)
-  }, []);
+  const requestCurrentResort = async () => {
+    await skiNavigator.requestGraph(currentResort);
 
+    const graphData = skiNavigator.getGraph();
+    const nodes = skiNavigator.getNodes();
+    const edges = skiNavigator.getEdges();
+    setNodes(nodes);
+    setEdges(edges);
+    setGraph(graphData);
+
+    let minLat = Infinity,
+      maxLat = -Infinity,
+      minLong = Infinity,
+      maxLong = -Infinity;
+    Object.keys(graphData).forEach((nodeID) => {
+      minLat = Math.min(minLat, nodes[nodeID].getLatitude());
+      maxLat = Math.max(maxLat, nodes[nodeID].getLatitude());
+      minLong = Math.min(minLong, nodes[nodeID].getLongitude());
+      maxLong = Math.max(maxLong, nodes[nodeID].getLongitude());
+    });
+
+    setRegion({
+      latitude: (minLat + maxLat) / 2,
+      longitude: (minLong + maxLong) / 2,
+      latitudeDelta: Math.abs(maxLat - minLat) * 1.1,
+      longitudeDelta: Math.abs(maxLong - minLong) * 1.1,
+    });
+
+    console.log(JSON.stringify(graphData));
+  };
+
+  useEffect(() => {
+    console.log("REGION IS \n\n\n\n\n" + JSON.stringify(region));
+  }, [region]);
+
+  const getPolylineColor = (edge: Edge) => {
+    if (edge.edgeType != "SLOPE") {
+      return "orange";
+    } else {
+      switch (edge.difficulty) {
+        case 1:
+          return "green";
+        case 2:
+          return "blue";
+        case 3:
+          return "black";
+        default:
+          return "gray";
+      }
+    }
+  };
+
+  useEffect(() => {
+    requestCurrentResort();
+  }, []);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -77,11 +137,57 @@ const NavigationScreen = () => {
             placeholder={"To..."}
           ></TextInput>
         </View>
-        <MapView
-          followsUserLocation={isRouting}
-          showsUserLocation={true}
-          style={styles.map}
-        />
+        {graph && edges && nodes && region && (
+          <MapView
+            followsUserLocation={isRouting}
+            showsUserLocation={true}
+            style={styles.map}
+            region={region}
+          >
+            {Object.keys(graph).map((nodeID) => {
+              return (
+                <Marker
+                  key={nodeID + "NodeMarker"}
+                  coordinate={{
+                    latitude: nodes[nodeID].latitude,
+                    longitude: nodes[nodeID].longitude,
+                  }}
+                >
+                  <View />
+                </Marker>
+              );
+            })}
+            {Object.keys(graph).map((fromID) => {
+              const edges = graph[fromID];
+              return Object.keys(edges).map((toID) => {
+                const edge = edges[toID];
+                if (edge.edgeType === "SLOPE") {
+                  return (
+                    <ArrowedPolyline
+                      key={`${fromID}-${toID}`}
+                      arrowSize={15}
+                      coordinates={[
+                        {
+                          latitude: nodes[fromID].latitude,
+                          longitude: nodes[fromID].longitude,
+                        },
+                        {
+                          latitude: nodes[toID].latitude,
+                          longitude: nodes[toID].longitude,
+                        },
+                      ]}
+                      addOnlyLastArrow={false}
+                      strokeColor={getPolylineColor(edge)}
+                      strokeWidth={1}
+                      lineDashPattern={[0]}
+                    />
+                  );
+                }
+                return null;
+              });
+            })}
+          </MapView>
+        )}
         <View style={styles.bottomBackdrop}>
           <Text style={{ fontFamily: FONTS.Medium, fontSize: 20 }}>
             Difficulty (select many)
@@ -135,10 +241,16 @@ const NavigationScreen = () => {
               </TouchableOpacity>
             </View>
             <View style={styles.buttonContainer}>
-              <TouchableOpacity onPress={onStartPressed} style={styles.startButton}>
+              <TouchableOpacity
+                onPress={onStartPressed}
+                style={styles.startButton}
+              >
                 <Text style={styles.startButtonText}>Start</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={onExitPressed} style={styles.exitButton}>
+              <TouchableOpacity
+                onPress={onExitPressed}
+                style={styles.exitButton}
+              >
                 <Text style={styles.startButtonText}>Exit</Text>
               </TouchableOpacity>
             </View>
@@ -210,7 +322,7 @@ const styles = StyleSheet.create({
     borderRadius: SIZES.height,
     marginLeft: 10,
     width: "100%",
-    alignItems: "center"
+    alignItems: "center",
   },
   exitButton: {
     backgroundColor: COLORS.red,
@@ -218,7 +330,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     marginTop: 5,
     width: "100%",
-    alignItems: "center"
+    alignItems: "center",
   },
   difficultyButton: {
     backgroundColor: COLORS.white,
