@@ -66,6 +66,57 @@ const NavigationScreen = () => {
     );
   };
 
+  const addArrowHeads = (
+    line: [
+      { latitude: number; longitude: number },
+      { latitude: number; longitude: number }
+    ],
+    interval = .001,
+    size = 0.0001
+  ) => {
+    const arrowLine = [];
+
+    for (let i = 0; i < line.length - 1; i++) {
+      const point1 = line[i];
+      const point2 = line[i + 1];
+
+      const dx = point2.latitude - point1.latitude;
+      const dy = point2.longitude - point1.longitude;
+      const segmentLength = Math.sqrt(dx * dx + dy * dy);
+
+      const splitSegment = (fraction) => ({
+        latitude: point1.latitude + dx * fraction,
+        longitude: point1.longitude + dy * fraction,
+      });
+
+      for (let j = 0; j < segmentLength; j += interval) {
+        const startPoint = splitSegment(j / segmentLength);
+        const midPoint = splitSegment((j + interval / 2) / segmentLength);
+        const endPoint = splitSegment((j + interval) / segmentLength);
+
+        const arrowPoint1 = {
+          latitude: midPoint.latitude - dy * size,
+          longitude: midPoint.longitude + dx * size,
+        };
+
+        const arrowPoint2 = {
+          latitude: midPoint.latitude + dy * size,
+          longitude: midPoint.longitude - dx * size,
+        };
+
+        arrowLine.push(
+          startPoint,
+          arrowPoint1,
+          midPoint,
+          arrowPoint2,
+          endPoint
+        );
+      }
+    }
+
+    return arrowLine;
+  };
+
   const requestCurrentResort = async () => {
     await skiNavigator.requestGraph(currentResort);
 
@@ -161,29 +212,26 @@ const NavigationScreen = () => {
               const edges = graph[fromID];
               return Object.keys(edges).map((toID) => {
                 const edge = edges[toID];
-                if (edge.edgeType === "SLOPE") {
-                  return (
-                    <ArrowedPolyline
-                      key={`${fromID}-${toID}`}
-                      arrowSize={15}
-                      coordinates={[
-                        {
-                          latitude: nodes[fromID].latitude,
-                          longitude: nodes[fromID].longitude,
-                        },
-                        {
-                          latitude: nodes[toID].latitude,
-                          longitude: nodes[toID].longitude,
-                        },
-                      ]}
-                      addOnlyLastArrow={false}
-                      strokeColor={getPolylineColor(edge)}
-                      strokeWidth={1}
-                      lineDashPattern={[0]}
-                    />
-                  );
-                }
-                return null;
+                const coordinates = addArrowHeads([
+                  {
+                    latitude: nodes[fromID].latitude,
+                    longitude: nodes[fromID].longitude,
+                  },
+                  {
+                    latitude: nodes[toID].latitude,
+                    longitude: nodes[toID].longitude,
+                  },
+                ]);
+
+                return (
+                  <ArrowedPolyline
+                    key={`${fromID}-${toID}`}
+                    coordinates={coordinates}
+                    strokeColor={getPolylineColor(edge)}
+                    strokeWidth={1}
+                    lineDashPattern={[0]}
+                  />
+                );
               });
             })}
           </MapView>
