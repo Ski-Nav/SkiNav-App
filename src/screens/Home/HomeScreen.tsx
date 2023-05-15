@@ -11,7 +11,6 @@ import MobileSafeView from "../../components/MobileSafeView";
 import {
   COLORS,
   FONTS,
-  Resort,
   SCREENS,
   SIZES,
 } from "../../constants/constants";
@@ -23,8 +22,8 @@ import { displayError } from "../../helpers/helpers";
 import { MaterialIcons } from "@expo/vector-icons";
 
 const HomeScreen = () => {
-  const [pulledResorts, setPulledResorts] = useState<Resort[]>();
-  const [selectedResort, setSelectedResort] = useState<Resort>();
+  const [pulledResorts, setPulledResorts] = useState<[string]>();
+  const [selectedResort, setSelectedResort] = useState<string>();
   const [didPullResorts, setDidPullResorts] = useState(false);
 
   const { currentResort, setCurrentResort } = useContext(ResortContext);
@@ -81,7 +80,6 @@ const HomeScreen = () => {
           {didPullResorts ? (
             pulledResorts ? (
               <CustomDropdown
-                displayProperty={"Name"}
                 setSelectedData={setSelectedResort}
                 data={pulledResorts}
                 defaultText={"Select a Resort"}
@@ -98,7 +96,7 @@ const HomeScreen = () => {
               </>
             )
           ) : (
-            <ActivityIndicator />
+            <ActivityIndicator style={{alignSelf: "center"}}/>
           )}
         </View>
       </View>
@@ -144,7 +142,7 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     marginTop: 80,
-    width: "100%",
+    width: SIZES.width - 70,
     alignItems: "center",
   },
   startButtonContainer: {

@@ -12,11 +12,10 @@ trying to get the token from the device. This is triggered by a one-time
 useEffect hook once the context is rendered.
 */
 import React, { useState, useEffect, createContext } from "react";
-import { Resort } from "../constants/constants";
 
 type ResortContextType = {
-  currentResort: Resort;
-  setCurrentResort: React.Dispatch<React.SetStateAction<Resort>>;
+  currentResort: string;
+  setCurrentResort: React.Dispatch<React.SetStateAction<string>>;
 };
 
 export const ResortContext = createContext<ResortContextType>({
@@ -25,7 +24,7 @@ export const ResortContext = createContext<ResortContextType>({
 });
 
 export const ResortProvider = ({ children }) => {
-  const [currentResort, setCurrentResort] = useState<Resort>();
+  const [currentResort, setCurrentResort] = useState<string>();
 
   return (
     <ResortContext.Provider

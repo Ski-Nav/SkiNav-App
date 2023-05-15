@@ -9,7 +9,6 @@ loaded. See UserContext.tsx for more information.
 import React, { useState, useEffect, createContext, useContext } from "react";
 import ProgressLoader from "rn-progress-loader";
 import { ActivityIndicator, SafeAreaView, View, Text } from "react-native";
-import { UserContext } from "./ResortContext";
 import { COLORS } from "../constants/constants";
 import * as Font from "expo-font";
 import { CustomFonts } from "../../assets/fonts";

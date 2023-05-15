@@ -1,15 +1,11 @@
-import { Resort, ResortMap } from "../constants/constants";
+import { API_URL } from "./../constants/constants";
 import { formatError } from "../helpers/helpers";
 
-export async function getAllResorts(): Promise<Resort[]> {
-  const pulledResorts: Resort[] = [{Name: "Big Bear"}, {Name: "Mammoth Mountain"}];
-  return pulledResorts;
-}
-
-export async function getResortMap(resort: Resort): Promise<ResortMap> {
-  if(!resort){
-    return undefined
+export async function getAllResorts(): Promise<[string]> {
+  const response = await fetch(API_URL + "maps/");
+  if (!response.ok) {
+    throw formatError("Error " + response.status, response.statusText);
   }
-  const pulledResortMap: ResortMap = {}
-  return pulledResortMap;
+  const responseJSON = response.json();
+  return responseJSON;
 }

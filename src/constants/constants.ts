@@ -7,15 +7,8 @@ This file contains constants and types useful in other parts of the app.
 import { Dimensions, Platform } from "react-native";
 import { CustomFonts } from "../../assets/fonts";
 
-export type Resort = {
-  Name: string;
-};
+export const API_URL = "http://ec2-18-222-140-238.us-east-2.compute.amazonaws.com:3000/api/v1/"
 
-export type ResortMap = {};
-
-export type Node = {};
-
-export type Edge = {};
 
 export const SCREENS = {
   HomeScreen: "HomeScreen",
@@ -28,7 +21,8 @@ export const COLORS = {
   gray: "#b7b7b7",
   white: "#ffffff",
   lightBlue: "#a4c2f4",
-  blue: "#455f8a"
+  blue: "#455f8a",
+  red: "#AA3212"
 };
 
 export const SIZES = {
