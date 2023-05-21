@@ -40,7 +40,6 @@ export class SkiNavigator{
         this.edges = {};
         
         Object.entries(graphJson["vertices"]).forEach(([_, v]) => {
-            console.log(v);
             let vertex = v as any;
             let vertexId: string = vertex["id"].toString();
     

@@ -46,7 +46,38 @@ const NavigationScreen = () => {
   const navigation = useNavigation<any>();
   const { currentResort } = useContext(ResortContext);
 
-  const onStartPressed = () => {};
+  const Arrow = ({ angle }) => {
+    return (
+      <View
+        style={{
+          transform: [{ rotate: `${angle}deg` }],
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <MaterialCommunityIcons name="arrow-up" size={24} color="black" />
+      </View>
+    );
+  };
+
+  const onStartPressed = () => {
+    skiNavigator.requestGraph(currentResort).then(() => {
+      const start = skiNavigator.getClosestNode(
+        32.88122718312019,
+        -117.23757547573618
+      );
+      const end = skiNavigator.getClosestNode(
+        32.879347457165174,
+        -117.23725798289574
+      );
+      // console.log("Start is " + start);
+      console.log("\n\n\n\n");
+      console.log(
+        skiNavigator.findAllShortestPath([start, end], new Set([0, 1]))
+      );
+      // console.log(skiNavigator.findAllShortestPath([start, end], new Set([0,1,2])));
+    });
+  };
 
   const onExitPressed = () => {
     Alert.alert(
@@ -64,57 +95,6 @@ const NavigationScreen = () => {
       ],
       { cancelable: false }
     );
-  };
-
-  const addArrowHeads = (
-    line: [
-      { latitude: number; longitude: number },
-      { latitude: number; longitude: number }
-    ],
-    interval = .001,
-    size = 0.0001
-  ) => {
-    const arrowLine = [];
-
-    for (let i = 0; i < line.length - 1; i++) {
-      const point1 = line[i];
-      const point2 = line[i + 1];
-
-      const dx = point2.latitude - point1.latitude;
-      const dy = point2.longitude - point1.longitude;
-      const segmentLength = Math.sqrt(dx * dx + dy * dy);
-
-      const splitSegment = (fraction) => ({
-        latitude: point1.latitude + dx * fraction,
-        longitude: point1.longitude + dy * fraction,
-      });
-
-      for (let j = 0; j < segmentLength; j += interval) {
-        const startPoint = splitSegment(j / segmentLength);
-        const midPoint = splitSegment((j + interval / 2) / segmentLength);
-        const endPoint = splitSegment((j + interval) / segmentLength);
-
-        const arrowPoint1 = {
-          latitude: midPoint.latitude - dy * size,
-          longitude: midPoint.longitude + dx * size,
-        };
-
-        const arrowPoint2 = {
-          latitude: midPoint.latitude + dy * size,
-          longitude: midPoint.longitude - dx * size,
-        };
-
-        arrowLine.push(
-          startPoint,
-          arrowPoint1,
-          midPoint,
-          arrowPoint2,
-          endPoint
-        );
-      }
-    }
-
-    return arrowLine;
   };
 
   const requestCurrentResort = async () => {
@@ -212,7 +192,7 @@ const NavigationScreen = () => {
               const edges = graph[fromID];
               return Object.keys(edges).map((toID) => {
                 const edge = edges[toID];
-                const coordinates = addArrowHeads([
+                const coordinates = [
                   {
                     latitude: nodes[fromID].latitude,
                     longitude: nodes[fromID].longitude,
@@ -221,26 +201,43 @@ const NavigationScreen = () => {
                     latitude: nodes[toID].latitude,
                     longitude: nodes[toID].longitude,
                   },
-                ]);
+                ];
+                const dx = nodes[toID].longitude - nodes[fromID].longitude;
+                const dy = nodes[toID].latitude - nodes[fromID].latitude;
+                const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
                 return (
-                  <ArrowedPolyline
-                    key={`${fromID}-${toID}`}
-                    coordinates={coordinates}
-                    strokeColor={getPolylineColor(edge)}
-                    strokeWidth={1}
-                    lineDashPattern={[0]}
-                  />
+                  <View key={`${fromID}-${toID}`}>
+                    <Polyline
+                      coordinates={coordinates}
+                      strokeColor={getPolylineColor(edge)}
+                      strokeWidth={1}
+                      lineDashPattern={[0]}
+                    />
+                    <Marker
+                      coordinate={{
+                        latitude:
+                          (nodes[fromID].latitude + nodes[toID].latitude) / 2,
+                        longitude:
+                          (nodes[fromID].longitude + nodes[toID].longitude) / 2,
+                      }}
+                    >
+                      <Arrow angle={angle} />
+                    </Marker>
+                  </View>
                 );
               });
             })}
           </MapView>
         )}
         <View style={styles.bottomBackdrop}>
+          <View>
           <Text style={{ fontFamily: FONTS.Medium, fontSize: 20 }}>
             Difficulty (select many)
           </Text>
+          </View>
           <View style={styles.buttonControlsContainer}>
+            <View>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 onPress={() => {
@@ -288,6 +285,8 @@ const NavigationScreen = () => {
                 />
               </TouchableOpacity>
             </View>
+            </View>
+
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 onPress={onStartPressed}
