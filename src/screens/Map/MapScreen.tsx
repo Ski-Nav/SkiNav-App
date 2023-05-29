@@ -18,10 +18,10 @@ import { displayError } from "../../helpers/helpers";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
-import { SkiNavigator } from "../../routing/SkiNavigator";
+import { SkiNavigator } from "../../routing/models/SkiNavigator";
 import { useNavigation } from "@react-navigation/native";
-import { Edge } from "../../routing/edge";
-import { Node } from "../../routing/node";
+import { Edge } from "../../routing/models/edge";
+import { Node } from "../../routing/models/node";
 import {
   MapViewWithHeading,
   ArrowedPolyline,
@@ -214,16 +214,6 @@ const NavigationScreen = () => {
                       strokeWidth={1}
                       lineDashPattern={[0]}
                     />
-                    <Marker
-                      coordinate={{
-                        latitude:
-                          (nodes[fromID].latitude + nodes[toID].latitude) / 2,
-                        longitude:
-                          (nodes[fromID].longitude + nodes[toID].longitude) / 2,
-                      }}
-                    >
-                      <Arrow angle={angle} />
-                    </Marker>
                   </View>
                 );
               });
@@ -232,12 +222,11 @@ const NavigationScreen = () => {
         )}
         <View style={styles.bottomBackdrop}>
           <View>
-          <Text style={{ fontFamily: FONTS.Medium, fontSize: 20 }}>
-            Difficulty (select many)
-          </Text>
+            <Text style={{ fontFamily: FONTS.Medium, fontSize: 20 }}>
+              Difficulty (select many)
+            </Text>
           </View>
           <View style={styles.buttonControlsContainer}>
-            <View>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 onPress={() => {
@@ -285,8 +274,6 @@ const NavigationScreen = () => {
                 />
               </TouchableOpacity>
             </View>
-            </View>
-
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 onPress={onStartPressed}

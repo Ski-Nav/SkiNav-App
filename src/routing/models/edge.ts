@@ -5,6 +5,7 @@ export class Edge {
     fromID: string;
     toID: string;
     weight: number;
+    status: string;
 
     constructor(edgeType: string, difficulty: number, name: string, fromID: string, toID: string, weight: number) {
         this.edgeType = edgeType;
@@ -13,6 +14,7 @@ export class Edge {
         this.fromID = fromID;
         this.toID = toID;
         this.weight = weight;
+        this.status = "open";
     }
 
     getEdgeType(): string {
