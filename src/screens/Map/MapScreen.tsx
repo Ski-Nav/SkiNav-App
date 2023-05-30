@@ -128,10 +128,6 @@ const NavigationScreen = () => {
     console.log(JSON.stringify(graphData));
   };
 
-  useEffect(() => {
-    console.log("REGION IS \n\n\n\n\n" + JSON.stringify(region));
-  }, [region]);
-
   const getPolylineColor = (edge: Edge) => {
     if (edge.edgeType != "SLOPE") {
       return "orange";
@@ -149,12 +145,8 @@ const NavigationScreen = () => {
     }
   };
 
-  useEffect(() => {
-    requestCurrentResort();
-  }, []);
-
-  return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+  const RenderSelectRouteComponent = () => {
+    return (
       <View style={styles.container}>
         <View style={styles.locationSearchContainer}>
           <TextInput
@@ -291,6 +283,20 @@ const NavigationScreen = () => {
           </View>
         </View>
       </View>
+    );
+  };
+
+  const RenderRoutingComponent = () => {
+    return <View style={styles.container}></View>;
+  };
+
+  useEffect(() => {
+    requestCurrentResort();
+  }, []);
+
+  return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      {isRouting ? <RenderRoutingComponent /> : <RenderSelectRouteComponent />}
     </TouchableWithoutFeedback>
   );
 };
