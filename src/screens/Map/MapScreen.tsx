@@ -1,31 +1,28 @@
+import React, { useContext, useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
-  Keyboard,
   TextInput,
+  TouchableOpacity,
   View,
   TouchableWithoutFeedback,
-  TouchableOpacity,
-  Image,
+  Keyboard,
   Alert,
 } from "react-native";
-import React, { useContext, useEffect, useState } from "react";
-import MapView, { Marker, Polyline } from "react-native-maps";
+import MapboxGL from "@rnmapbox/maps";
 import { COLORS, FONTS, SIZES } from "../../constants/constants";
-import { ScreenContext } from "../../contexts/ScreenContext";
 import { ResortContext } from "../../contexts/ResortContext";
-import { displayError } from "../../helpers/helpers";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { FontAwesome } from "@expo/vector-icons";
+import { ScreenContext } from "../../contexts/ScreenContext";
 import { SkiNavigator } from "../../routing/models/SkiNavigator";
 import { useNavigation } from "@react-navigation/native";
 import { Edge } from "../../routing/models/edge";
 import { Node } from "../../routing/models/node";
-import {
-  MapViewWithHeading,
-  ArrowedPolyline,
-} from "react-native-maps-line-arrow";
+import { SafeAreaView } from "react-native-safe-area-context";
+import MapCredentials from "./../../credentials/mapbox.json";
+import { MaterialCommunityIcons } from '@expo/vector-icons'; 
+
+
+MapboxGL.setAccessToken(MapCredentials.ACCESS_TOKEN);
 
 const NavigationScreen = () => {
   const { setLoading } = useContext(ScreenContext);
@@ -46,20 +43,6 @@ const NavigationScreen = () => {
   const navigation = useNavigation<any>();
   const { currentResort } = useContext(ResortContext);
 
-  const Arrow = ({ angle }) => {
-    return (
-      <View
-        style={{
-          transform: [{ rotate: `${angle}deg` }],
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <MaterialCommunityIcons name="arrow-up" size={24} color="black" />
-      </View>
-    );
-  };
-
   const onStartPressed = () => {
     skiNavigator.requestGraph(currentResort).then(() => {
       const start = skiNavigator.getClosestNode(
@@ -70,12 +53,9 @@ const NavigationScreen = () => {
         32.879347457165174,
         -117.23725798289574
       );
-      // console.log("Start is " + start);
-      console.log("\n\n\n\n");
       console.log(
         skiNavigator.findAllShortestPath([start, end], new Set([0, 1]))
       );
-      // console.log(skiNavigator.findAllShortestPath([start, end], new Set([0,1,2])));
     });
   };
 
@@ -129,7 +109,7 @@ const NavigationScreen = () => {
   };
 
   const getPolylineColor = (edge: Edge) => {
-    if (edge.edgeType != "SLOPE") {
+    if (edge.edgeType !== "SLOPE") {
       return "orange";
     } else {
       switch (edge.difficulty) {
@@ -145,6 +125,16 @@ const NavigationScreen = () => {
     }
   };
 
+  useEffect(() => {
+    requestCurrentResort();
+  }, []);
+
+  const RenderRoutingComponent = () => {
+    return (
+      <View></View>
+    )
+  }
+
   const RenderSelectRouteComponent = () => {
     return (
       <View style={styles.container}>
@@ -153,64 +143,65 @@ const NavigationScreen = () => {
             style={styles.locationSearchInput}
             placeholderTextColor={COLORS.gray}
             placeholder={"From..."}
-          ></TextInput>
+          />
           <TextInput
             style={styles.locationSearchInput}
             placeholderTextColor={COLORS.gray}
             placeholder={"To..."}
-          ></TextInput>
+          />
         </View>
         {graph && edges && nodes && region && (
-          <MapView
-            followsUserLocation={isRouting}
-            showsUserLocation={true}
+          <MapboxGL.MapView
             style={styles.map}
-            region={region}
+            styleURL={MapboxGL.StyleURL.Street}
           >
-            {Object.keys(graph).map((nodeID) => {
-              return (
-                <Marker
-                  key={nodeID + "NodeMarker"}
-                  coordinate={{
-                    latitude: nodes[nodeID].latitude,
-                    longitude: nodes[nodeID].longitude,
-                  }}
-                >
-                  <View />
-                </Marker>
-              );
-            })}
+            <MapboxGL.Camera
+              zoomLevel={10}
+              centerCoordinate={[region.longitude, region.latitude]}
+            />
             {Object.keys(graph).map((fromID) => {
               const edges = graph[fromID];
               return Object.keys(edges).map((toID) => {
                 const edge = edges[toID];
                 const coordinates = [
-                  {
-                    latitude: nodes[fromID].latitude,
-                    longitude: nodes[fromID].longitude,
-                  },
-                  {
-                    latitude: nodes[toID].latitude,
-                    longitude: nodes[toID].longitude,
-                  },
+                  [nodes[fromID].getLongitude(), nodes[fromID].getLatitude()],
+                  [nodes[toID].getLongitude(), nodes[toID].getLatitude()],
                 ];
-                const dx = nodes[toID].longitude - nodes[fromID].longitude;
-                const dy = nodes[toID].latitude - nodes[fromID].latitude;
+                const dx =
+                  nodes[toID].getLongitude() - nodes[fromID].getLongitude();
+                const dy =
+                  nodes[toID].getLatitude() - nodes[fromID].getLatitude();
                 const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
                 return (
-                  <View key={`${fromID}-${toID}`}>
-                    <Polyline
-                      coordinates={coordinates}
-                      strokeColor={getPolylineColor(edge)}
-                      strokeWidth={1}
-                      lineDashPattern={[0]}
+                  <MapboxGL.ShapeSource
+                    id={`${fromID}-${toID}`}
+                    key={`${fromID}-${toID}`}
+                    // shape={{
+                    //   type: "Feature",
+                    //   geometry: { type: "LineString", coordinates },
+                    // }}
+                  >
+                    <MapboxGL.LineLayer
+                      id={`${fromID}-${toID}-line`}
+                      style={{
+                        lineColor: getPolylineColor(edge),
+                        lineWidth: 1,
+                      }}
                     />
-                  </View>
+                    <MapboxGL.SymbolLayer
+                      id={`${fromID}-${toID}-arrow`}
+                      style={{
+                        iconRotationAlignment: "map",
+                        iconImage: "arrow-up",
+                        iconRotate: angle,
+                        iconSize: 0.6,
+                      }}
+                    />
+                  </MapboxGL.ShapeSource>
                 );
               });
             })}
-          </MapView>
+          </MapboxGL.MapView>
         )}
         <View style={styles.bottomBackdrop}>
           <View>
@@ -286,17 +277,15 @@ const NavigationScreen = () => {
     );
   };
 
-  const RenderRoutingComponent = () => {
-    return <View style={styles.container}></View>;
-  };
-
-  useEffect(() => {
-    requestCurrentResort();
-  }, []);
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      {isRouting ? <RenderRoutingComponent /> : <RenderSelectRouteComponent />}
+      <SafeAreaView style={styles.container}>
+        {isRouting ? (
+          <RenderRoutingComponent />
+        ) : (
+          <RenderSelectRouteComponent />
+        )}
+      </SafeAreaView>
     </TouchableWithoutFeedback>
   );
 };
@@ -309,8 +298,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   map: {
-    width: "100%",
-    height: "100%",
+    flex: 1,
   },
   locationSearchContainer: {
     position: "absolute",
