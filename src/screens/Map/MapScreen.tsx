@@ -30,6 +30,7 @@ import {
   ArrowedPolyline,
 } from "react-native-maps-line-arrow";
 import * as Location from "expo-location";
+import CustomDropdown from "../../components/styled/CustomDropdown/CustomDropdown";
 
 const NavigationScreen = () => {
   const { setLoading } = useContext(ScreenContext);
@@ -49,10 +50,15 @@ const NavigationScreen = () => {
     useState<SearchableNode[]>(null);
   const [region, setRegion] = useState<any>(null);
 
+  const [fromNode, setFromNode] = useState<SearchableNode>(null);
+  const [toNode, setToNode] = useState<SearchableNode>(null);
+
   const navigation = useNavigation<any>();
   const { currentResort } = useContext(ResortContext);
 
   const [location, setLocation] = useState<Location.LocationObject>(null);
+
+  const allGraphLoaded = !(!region || !nodes || !edges || !searchableNodes);
 
   useEffect(() => {
     // Request permission to access the user's location
@@ -87,46 +93,33 @@ const NavigationScreen = () => {
   const generateRoute = (startNode: string, endNode: string) => {
     const set = new Set<number>();
     if (easySelected) {
-      set.add(0);
-    }
-    if (mediumSelected) {
       set.add(1);
     }
-    if (hardSelected) {
+    if (mediumSelected) {
       set.add(2);
     }
+    if (hardSelected) {
+      set.add(3);
+    }
     skiNavigator
-    .findAllShortestPath([startNode, endNode], set)
-    .then((result) => {
-      setCurrentRoute(result[0])
-    })
-    .catch((error: Error) => {
-      displayError(error);
-    });
-  }
+      .requestGraph(currentResort)
+      .then(() => {
+        skiNavigator
+          .findAllShortestPath([startNode, endNode], set)
+          .then((result) => {
+            setCurrentRoute(result[0]);
+          })
+          .catch((error: Error) => {
+            displayError(error);
+          });
+      })
+      .catch((error: Error) => {
+        displayError(error);
+      });
+  };
 
   const onStartPressed = () => {
-    skiNavigator.requestGraph(currentResort).then(() => {
-      const start = skiNavigator.getClosestNode(
-        32.88122718312019,
-        -117.23757547573618
-      );
-      const end = skiNavigator.getClosestNode(
-        32.879347457165174,
-        -117.23725798289574
-      );
-      // console.log("Start is " + start);
-      console.log("\n\n\n\n");
-      skiNavigator
-        .findAllShortestPath([start, end], new Set([0, 1, 2]))
-        .then((result) => {
-          setCurrentRoute(result[0])
-        })
-        .catch((error: Error) => {
-          displayError(error);
-        });
-      // console.log(skiNavigator.findAllShortestPath([start, end], new Set([0,1,2])));
-    });
+    generateRoute(fromNode.node.nodeId, toNode.node.nodeId);
   };
 
   const onExitPressed = () => {
@@ -159,7 +152,7 @@ const NavigationScreen = () => {
     setGraph(graphData);
     setSearchableNodes(searchableNodes);
 
-    console.log(searchableNodes)
+    console.log(searchableNodes);
 
     let minLat = Infinity,
       maxLat = -Infinity,
@@ -200,22 +193,8 @@ const NavigationScreen = () => {
   };
 
   const RenderSelectRouteComponent = () => {
-    const allGraphLoaded = !(!region || !nodes || !edges || !searchableNodes);
-
     return (
       <View style={styles.container}>
-        <View style={styles.locationSearchContainer}>
-          <TextInput
-            style={styles.locationSearchInput}
-            placeholderTextColor={COLORS.gray}
-            placeholder={"From..."}
-          ></TextInput>
-          <TextInput
-            style={styles.locationSearchInput}
-            placeholderTextColor={COLORS.gray}
-            placeholder={"To..."}
-          ></TextInput>
-        </View>
         {allGraphLoaded && (
           <MapView
             followsUserLocation={!!currentRoute}
@@ -262,6 +241,26 @@ const NavigationScreen = () => {
                       strokeWidth={1}
                       lineDashPattern={[0]}
                     />
+                    {fromNode && (
+                      <Marker
+                        coordinate={{
+                          latitude: fromNode.node.getLatitude(),
+                          longitude: fromNode.node.getLongitude(),
+                        }}
+                        pinColor="green"
+                        title={fromNode.name}
+                      ></Marker>
+                    )}
+                    {toNode && (
+                      <Marker
+                        coordinate={{
+                          latitude: toNode.node.getLatitude(),
+                          longitude: toNode.node.getLongitude(),
+                        }}
+                        pinColor="yellow"
+                        title={toNode.name}
+                      ></Marker>
+                    )}
                   </View>
                 );
               });
@@ -351,9 +350,38 @@ const NavigationScreen = () => {
   }, []);
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      {currentRoute ? <RenderRoutingComponent /> : <RenderSelectRouteComponent />}
-    </TouchableWithoutFeedback>
+    <>
+      {!currentRoute && searchableNodes && (
+        <SafeAreaView
+          style={{
+            top: 20,
+            position: "absolute",
+            zIndex: 10,
+            width: "90%",
+            alignSelf: "center",
+          }}
+        >
+          <CustomDropdown
+            setSelectedData={setFromNode}
+            data={searchableNodes}
+            displayProperty={"name"}
+            defaultText={"From..."}
+          />
+          <View style={{ height: 10 }} />
+          <CustomDropdown
+            setSelectedData={setToNode}
+            data={searchableNodes}
+            displayProperty={"name"}
+            defaultText={"To..."}
+          />
+        </SafeAreaView>
+      )}
+      {currentRoute ? (
+        <RenderRoutingComponent />
+      ) : (
+        <RenderSelectRouteComponent />
+      )}
+    </>
   );
 };
 
