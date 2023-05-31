@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Pressable,
 } from "react-native";
 import React, { useContext, useEffect, useState } from "react";
 import MapView, { Marker, Polyline } from "react-native-maps";
@@ -60,35 +61,61 @@ const NavigationScreen = () => {
 
   const allGraphLoaded = !(!region || !nodes || !edges || !searchableNodes);
 
+  // useEffect(() => {
+  //   // Request permission to access the user's location
+  //   (async () => {
+  //     let { status } = await Location.requestForegroundPermissionsAsync();
+  //     if (status !== "granted") {
+  //       Alert.alert("Permission to access location was denied");
+  //       return;
+  //     }
+
+  //     // Start listening for location updates
+  //     let locationSubscription = await Location.watchPositionAsync(
+  //       {
+  //         accuracy: Location.Accuracy.Highest,
+  //         timeInterval: 2000, // Update location every 5 seconds
+  //         distanceInterval: 10, // Update location if the user moves 10 meters
+  //       },
+  //       (location) => {
+  //         console.log("location updated!");
+  //         console.log(JSON.stringify(location));
+  //         setLocation(location);
+  //       }
+  //     );
+
+  //     // Clean up the subscription when the component is unmounted
+  //     return () => {
+  //       if (locationSubscription) {
+  //         locationSubscription.remove();
+  //       }
+  //     };
+  //   })();
+  // }, []);
+
   useEffect(() => {
-    // Request permission to access the user's location
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission to access location was denied");
-        return;
-      }
+    reroute(location);
+  }, [location]);
 
-      // Start listening for location updates
-      let locationSubscription = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 5000, // Update location every 5 seconds
-          distanceInterval: 10, // Update location if the user moves 10 meters
-        },
-        (location) => {
-          setLocation(location);
-        }
-      );
+  const manualUpdateUserLocation = async () => {
+    const location = await Location.getLastKnownPositionAsync();
+    console.log(location);
+    setLocation(location);
+  };
 
-      // Clean up the subscription when the component is unmounted
-      return () => {
-        if (locationSubscription) {
-          locationSubscription.remove();
-        }
-      };
-    })();
-  }, []);
+  const reroute = (location: Location.LocationObject) => {
+    if (!location || !toNode || !currentRoute) {
+      return;
+    }
+
+    const closestNode = skiNavigator.getClosestNode(
+      location.coords.latitude,
+      location.coords.longitude
+    );
+
+    console.log(nodes[closestNode]);
+    generateRoute(closestNode, toNode.node.nodeId);
+  };
 
   const generateRoute = (startNode: string, endNode: string) => {
     const set = new Set<number>();
@@ -118,7 +145,14 @@ const NavigationScreen = () => {
       });
   };
 
+  useEffect(() => {
+    console.log("\n\n\n\n\nCURRENT ROUTE" + JSON.stringify(currentRoute));
+  }, [currentRoute]);
+
   const onStartPressed = () => {
+    if (!fromNode || !toNode) {
+      return;
+    }
     generateRoute(fromNode.node.nodeId, toNode.node.nodeId);
   };
 
@@ -138,6 +172,10 @@ const NavigationScreen = () => {
       ],
       { cancelable: false }
     );
+  };
+
+  const onStopRoutePressed = () => {
+    setCurrentRoute(null);
   };
 
   const requestCurrentResort = async () => {
@@ -231,7 +269,6 @@ const NavigationScreen = () => {
                 ];
                 const dx = nodes[toID].longitude - nodes[fromID].longitude;
                 const dy = nodes[toID].latitude - nodes[fromID].latitude;
-                const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
                 return (
                   <View key={`${fromID}-${toID}`}>
@@ -342,7 +379,76 @@ const NavigationScreen = () => {
   };
 
   const RenderRoutingComponent = () => {
-    return <View style={styles.container}></View>;
+    return (
+      <View style={styles.container}>
+        {currentRoute && (
+          <MapView showsUserLocation={true} style={styles.map} region={region}>
+            {currentRoute.map((nodeOrEdge, index) => {
+              if (nodeOrEdge instanceof Node) {
+                console.log("GET LATITUDE ")
+                return (
+                  <View key={"node" + nodeOrEdge.nodeId}>
+                    <Marker
+                      key={nodeOrEdge + "NodeMarker"}
+                      coordinate={{
+                        latitude: nodeOrEdge.getLatitude(),
+                        longitude: nodeOrEdge.getLatitude(),
+                      }}
+                      pinColor={index === 2 ? "red" : "green"}
+                    />
+                  </View>
+                );
+              }
+              if (nodeOrEdge instanceof Edge) {
+                const coordinates = [
+                  {
+                    latitude: nodes[nodeOrEdge.fromID].latitude,
+                    longitude: nodes[nodeOrEdge.fromID].longitude,
+                  },
+                  {
+                    latitude: nodes[nodeOrEdge.toID].latitude,
+                    longitude: nodes[nodeOrEdge.toID].longitude,
+                  },
+                ];
+
+                return (
+                  <View
+                    key={"Edge" + nodeOrEdge.fromID + "to" + nodeOrEdge.toID}
+                  >
+                    <Polyline
+                      coordinates={coordinates}
+                      strokeColor={"white"}
+                      strokeWidth={1}
+                      lineDashPattern={[0]}
+                    />
+                  </View>
+                );
+              }
+            })}
+          </MapView>
+        )}
+        <View style={styles.bottomBackdrop}>
+          <View style={styles.buttonControlsContainer}>
+            <View style={styles.buttonContainer}>
+              <Pressable
+                onPress={manualUpdateUserLocation}
+                style={styles.startButton}
+              >
+                <Text style={styles.startButtonText}>
+                  Manual Update Location
+                </Text>
+              </Pressable>
+              <TouchableOpacity
+                onPress={onStopRoutePressed}
+                style={styles.exitButton}
+              >
+                <Text style={styles.startButtonText}>Stop Route</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
   };
 
   useEffect(() => {
