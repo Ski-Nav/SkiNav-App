@@ -3,9 +3,10 @@ import { Edge } from "./edge";
 import { PriorityQueue } from "./priorityQueue";
 import { trailStatusUrls } from "./../cfg/trailStatusUrls";
 import fs from 'fs';
+import { API_URL } from "../../constants/constants";
 var cloneDeep = require('lodash.clonedeep');
 
-interface Alias {
+export interface SearchableNode {
     name: string;
     node: Node;
 }
@@ -46,8 +47,8 @@ export class SkiNavigator{
     }
 
     
-    getSearchableNodes(): Alias[] {
-        var searchableNodes: Alias[] = [];
+    getSearchableNodes(): SearchableNode[] {
+        var searchableNodes: SearchableNode[] = [];
         for (let nodeId in this.nodes) {
             const aliases = this.nodes[nodeId]["aliases"];
             for (let i in aliases) {
@@ -62,7 +63,7 @@ export class SkiNavigator{
      */
     async requestGraph(graphName: string) {
         this.resortName = graphName;
-        const url = "http://ec2-18-222-140-238.us-east-2.compute.amazonaws.com:3000/api/v1/maps/".concat(graphName);
+        const url = API_URL + "maps/" + graphName;
         const response = await fetch(url);
         const graphJson = await response.json();
     
@@ -207,7 +208,7 @@ export class SkiNavigator{
             allPath: (Edge|Node)[][] = [];
 
         // Check edges status everytime before routing.
-        await this.updateEdgesStatus();
+        // await this.updateEdgesStatus();
         var graph = this._checkDifficultyAndStatus(this.graph, difficulties);
 
         while (stops.length) {

@@ -18,7 +18,10 @@ import { displayError } from "../../helpers/helpers";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
-import { SkiNavigator } from "../../routing/models/SkiNavigator";
+import {
+  SearchableNode,
+  SkiNavigator,
+} from "../../routing/models/SkiNavigator";
 import { useNavigation } from "@react-navigation/native";
 import { Edge } from "../../routing/models/edge";
 import { Node } from "../../routing/models/node";
@@ -26,10 +29,11 @@ import {
   MapViewWithHeading,
   ArrowedPolyline,
 } from "react-native-maps-line-arrow";
+import * as Location from "expo-location";
 
 const NavigationScreen = () => {
   const { setLoading } = useContext(ScreenContext);
-  const [isRouting, setIsRouting] = useState(false);
+  const [currentRoute, setCurrentRoute] = useState<(Edge | Node)[]>(null);
 
   const [easySelected, setEasySelected] = useState(false);
   const [mediumSelected, setMediumSelected] = useState(false);
@@ -41,24 +45,65 @@ const NavigationScreen = () => {
   }>(null);
   const [nodes, setNodes] = useState<{ [id: string]: Node }>(null);
   const [edges, setEdges] = useState<{ [name: string]: Edge }>(null);
+  const [searchableNodes, setSearchableNodes] =
+    useState<SearchableNode[]>(null);
   const [region, setRegion] = useState<any>(null);
 
   const navigation = useNavigation<any>();
   const { currentResort } = useContext(ResortContext);
 
-  const Arrow = ({ angle }) => {
-    return (
-      <View
-        style={{
-          transform: [{ rotate: `${angle}deg` }],
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <MaterialCommunityIcons name="arrow-up" size={24} color="black" />
-      </View>
-    );
-  };
+  const [location, setLocation] = useState<Location.LocationObject>(null);
+
+  useEffect(() => {
+    // Request permission to access the user's location
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission to access location was denied");
+        return;
+      }
+
+      // Start listening for location updates
+      let locationSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 5000, // Update location every 5 seconds
+          distanceInterval: 10, // Update location if the user moves 10 meters
+        },
+        (location) => {
+          setLocation(location);
+        }
+      );
+
+      // Clean up the subscription when the component is unmounted
+      return () => {
+        if (locationSubscription) {
+          locationSubscription.remove();
+        }
+      };
+    })();
+  }, []);
+
+  const generateRoute = (startNode: string, endNode: string) => {
+    const set = new Set<number>();
+    if (easySelected) {
+      set.add(0);
+    }
+    if (mediumSelected) {
+      set.add(1);
+    }
+    if (hardSelected) {
+      set.add(2);
+    }
+    skiNavigator
+    .findAllShortestPath([startNode, endNode], set)
+    .then((result) => {
+      setCurrentRoute(result[0])
+    })
+    .catch((error: Error) => {
+      displayError(error);
+    });
+  }
 
   const onStartPressed = () => {
     skiNavigator.requestGraph(currentResort).then(() => {
@@ -72,9 +117,14 @@ const NavigationScreen = () => {
       );
       // console.log("Start is " + start);
       console.log("\n\n\n\n");
-      console.log(
-        skiNavigator.findAllShortestPath([start, end], new Set([0, 1]))
-      );
+      skiNavigator
+        .findAllShortestPath([start, end], new Set([0, 1, 2]))
+        .then((result) => {
+          setCurrentRoute(result[0])
+        })
+        .catch((error: Error) => {
+          displayError(error);
+        });
       // console.log(skiNavigator.findAllShortestPath([start, end], new Set([0,1,2])));
     });
   };
@@ -103,9 +153,13 @@ const NavigationScreen = () => {
     const graphData = skiNavigator.getGraph();
     const nodes = skiNavigator.getNodes();
     const edges = skiNavigator.getEdges();
+    const searchableNodes = skiNavigator.getSearchableNodes();
     setNodes(nodes);
     setEdges(edges);
     setGraph(graphData);
+    setSearchableNodes(searchableNodes);
+
+    console.log(searchableNodes)
 
     let minLat = Infinity,
       maxLat = -Infinity,
@@ -125,7 +179,7 @@ const NavigationScreen = () => {
       longitudeDelta: Math.abs(maxLong - minLong) * 1.1,
     });
 
-    console.log(JSON.stringify(graphData));
+    console.log(JSON.stringify(nodes));
   };
 
   const getPolylineColor = (edge: Edge) => {
@@ -146,6 +200,8 @@ const NavigationScreen = () => {
   };
 
   const RenderSelectRouteComponent = () => {
+    const allGraphLoaded = !(!region || !nodes || !edges || !searchableNodes);
+
     return (
       <View style={styles.container}>
         <View style={styles.locationSearchContainer}>
@@ -160,9 +216,9 @@ const NavigationScreen = () => {
             placeholder={"To..."}
           ></TextInput>
         </View>
-        {graph && edges && nodes && region && (
+        {allGraphLoaded && (
           <MapView
-            followsUserLocation={isRouting}
+            followsUserLocation={!!currentRoute}
             showsUserLocation={true}
             style={styles.map}
             region={region}
@@ -296,7 +352,7 @@ const NavigationScreen = () => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      {isRouting ? <RenderRoutingComponent /> : <RenderSelectRouteComponent />}
+      {currentRoute ? <RenderRoutingComponent /> : <RenderSelectRouteComponent />}
     </TouchableWithoutFeedback>
   );
 };
