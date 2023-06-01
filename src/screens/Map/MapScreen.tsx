@@ -543,6 +543,7 @@ const NavigationScreen = () => {
             data={searchableNodes}
             displayProperty={"name"}
             defaultText={"From..."}
+            defaultValue={fromNode}
           />
           <View style={{ height: 10 }} />
           <CustomDropdown
@@ -550,6 +551,7 @@ const NavigationScreen = () => {
             data={searchableNodes}
             displayProperty={"name"}
             defaultText={"To..."}
+            defaultValue={toNode}
           />
         </SafeAreaView>
       )}
