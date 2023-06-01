@@ -19,6 +19,8 @@ import { displayError } from "../../helpers/helpers";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
+import * as Speech from "expo-speech";
+
 import {
   SearchableNode,
   SkiNavigator,
@@ -59,8 +61,13 @@ const NavigationScreen = () => {
 
   const [location, setLocation] = useState<Location.LocationObject>(null);
 
+  const [currentSpeechText, setCurrentSpeechText] = useState<string>(undefined);
   const allGraphLoaded = !(!region || !nodes || !edges || !searchableNodes);
 
+  let lastLatLng: {
+    latitude: number;
+    longitude: number;
+  } = undefined;
   // useEffect(() => {
   //   // Request permission to access the user's location
   //   (async () => {
@@ -98,9 +105,34 @@ const NavigationScreen = () => {
   }, [location]);
 
   const manualUpdateUserLocation = async () => {
-    const location = await Location.getLastKnownPositionAsync();
-    console.log(location);
-    setLocation(location);
+    // const location = await Location.getLastKnownPositionAsync();
+    // console.log(location);
+    // setLocation(location);
+
+    // We're gonna just go next along the route
+    const newArray = currentRoute.slice(2);
+    setCurrentRoute(newArray);
+    if (newArray[1] instanceof Edge) {
+      setCurrentSpeechText("Travel along" + newArray[1].getName());
+    } else {
+      setCurrentSpeechText("FATAL ERROR IN SETTING EDGE SPEECH TEXT");
+    }
+  };
+
+  useEffect(() => {
+    console.log("UPDATED SPEECH TEXT: " + currentSpeechText);
+    if(!currentSpeechText){
+      return
+    }
+    speakText(currentSpeechText);
+  }, [currentSpeechText]);
+
+  const speakText = (text: string) => {
+    try {
+      Speech.speak(text, { language: "en" }); // Set the language code accordingly
+    } catch (error) {
+      console.error("Failed to speak the text:", error);
+    }
   };
 
   const reroute = (location: Location.LocationObject) => {
@@ -147,6 +179,18 @@ const NavigationScreen = () => {
 
   useEffect(() => {
     console.log("\n\n\n\n\nCURRENT ROUTE" + JSON.stringify(currentRoute));
+    lastLatLng = undefined;
+    if(!currentRoute){
+      setCurrentSpeechText(undefined)
+    }
+    else{
+      if(currentRoute[1] instanceof Edge){
+        setCurrentSpeechText("Travel along " + currentRoute[1].getName())
+      }
+      else{
+        setCurrentSpeechText("Travel along the slope")
+      }
+    }
   }, [currentRoute]);
 
   const onStartPressed = () => {
@@ -267,8 +311,6 @@ const NavigationScreen = () => {
                     longitude: nodes[toID].longitude,
                   },
                 ];
-                const dx = nodes[toID].longitude - nodes[fromID].longitude;
-                const dy = nodes[toID].latitude - nodes[fromID].latitude;
 
                 return (
                   <View key={`${fromID}-${toID}`}>
@@ -285,7 +327,8 @@ const NavigationScreen = () => {
                           longitude: fromNode.node.getLongitude(),
                         }}
                         pinColor="green"
-                        title={fromNode.name}
+                        title={"From"}
+                        description={fromNode.name}
                       ></Marker>
                     )}
                     {toNode && (
@@ -295,7 +338,8 @@ const NavigationScreen = () => {
                           longitude: toNode.node.getLongitude(),
                         }}
                         pinColor="yellow"
-                        title={toNode.name}
+                        title={"To"}
+                        description={toNode.name}
                       ></Marker>
                     )}
                   </View>
@@ -385,16 +429,33 @@ const NavigationScreen = () => {
           <MapView showsUserLocation={true} style={styles.map} region={region}>
             {currentRoute.map((nodeOrEdge, index) => {
               if (nodeOrEdge instanceof Node) {
-                console.log("GET LATITUDE ")
+                const lat = nodeOrEdge.getLatitude();
+                const long = nodeOrEdge.getLongitude();
+                const coordinate = {
+                  latitude: lat,
+                  longitude: long,
+                };
+                if (index === 0) {
+                  lastLatLng = coordinate;
+                  return;
+                }
+                const lineCoordinates = [lastLatLng, coordinate];
+
+                lastLatLng = coordinate;
                 return (
-                  <View key={"node" + nodeOrEdge.nodeId}>
+                  <View>
                     <Marker
-                      key={nodeOrEdge + "NodeMarker"}
                       coordinate={{
-                        latitude: nodeOrEdge.getLatitude(),
-                        longitude: nodeOrEdge.getLatitude(),
+                        latitude: lat,
+                        longitude: long,
                       }}
                       pinColor={index === 2 ? "red" : "green"}
+                    />
+                    <Polyline
+                      coordinates={lineCoordinates}
+                      strokeColor="white"
+                      strokeWidth={1}
+                      lineDashPattern={[0]}
                     />
                   </View>
                 );
@@ -402,31 +463,41 @@ const NavigationScreen = () => {
               if (nodeOrEdge instanceof Edge) {
                 const coordinates = [
                   {
-                    latitude: nodes[nodeOrEdge.fromID].latitude,
-                    longitude: nodes[nodeOrEdge.fromID].longitude,
+                    latitude: nodes[nodeOrEdge.fromID].getLatitude(),
+                    longitude: nodes[nodeOrEdge.fromID].getLongitude(),
                   },
                   {
-                    latitude: nodes[nodeOrEdge.toID].latitude,
-                    longitude: nodes[nodeOrEdge.toID].longitude,
+                    latitude: nodes[nodeOrEdge.toID].getLatitude(),
+                    longitude: nodes[nodeOrEdge.toID].getLongitude(),
                   },
                 ];
 
+                console.log(coordinates);
+
+                // There's a bug in the original edge code. Just doing a hotfix
+
                 return (
-                  <View
-                    key={"Edge" + nodeOrEdge.fromID + "to" + nodeOrEdge.toID}
-                  >
-                    <Polyline
-                      coordinates={coordinates}
-                      strokeColor={"white"}
-                      strokeWidth={1}
-                      lineDashPattern={[0]}
-                    />
-                  </View>
+                  <></>
+                  // <View
+                  //   key={"Edge" + nodeOrEdge.fromID + "to" + nodeOrEdge.toID}
+                  // >
+                  //   <Polyline
+                  //     coordinates={coordinates}
+                  //     strokeColor={"white"}
+                  // strokeWidth={1}
+                  // lineDashPattern={[0]}
+                  //   />
+                  // </View>
                 );
               }
             })}
           </MapView>
         )}
+        <View style={styles.topBackdrop}>
+          <Text style={{ textAlign: "center", fontFamily: FONTS.Medium, fontSize: 20 }}>
+            {currentSpeechText}
+          </Text>
+        </View>
         <View style={styles.bottomBackdrop}>
           <View style={styles.buttonControlsContainer}>
             <View style={styles.buttonContainer}>
@@ -546,6 +617,26 @@ const styles = StyleSheet.create({
     elevation: 5,
     padding: 20,
     paddingBottom: SIZES.bottomBarHeight + 10,
+  },
+  topBackdrop: {
+    backgroundColor: COLORS.lightRed,
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+    position: "absolute",
+    top: 0,
+    zIndex: 10,
+    left: 15,
+    right: 15,
+    shadowColor: COLORS.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 3.84,
+    elevation: 5,
+    padding: 20,
+    paddingTop: SIZES.topBarHeight + 10,
   },
   startButton: {
     backgroundColor: COLORS.blue,

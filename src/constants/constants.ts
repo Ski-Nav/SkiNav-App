@@ -22,7 +22,8 @@ export const COLORS = {
   white: "#ffffff",
   lightBlue: "#a4c2f4",
   blue: "#455f8a",
-  red: "#AA3212"
+  red: "#AA3212",
+  lightRed: "#FA9B86"
 };
 
 export const SIZES = {
