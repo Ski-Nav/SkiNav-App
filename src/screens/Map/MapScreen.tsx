@@ -112,11 +112,11 @@ const NavigationScreen = () => {
     // We're gonna just go next along the route
     const newArray = currentRoute.slice(2);
     setCurrentRoute(newArray);
-    if (newArray[1] instanceof Edge) {
-      setCurrentSpeechText("Travel along" + newArray[1].getName());
-    } else {
-      setCurrentSpeechText("FATAL ERROR IN SETTING EDGE SPEECH TEXT");
-    }
+    // if (newArray[1] instanceof Edge) {
+    //   setCurrentSpeechText("Travel along" + newArray[1].getName());
+    // } else {
+    //   setCurrentSpeechText("FATAL ERROR IN SETTING EDGE SPEECH TEXT");
+    // }
   };
 
   useEffect(() => {
