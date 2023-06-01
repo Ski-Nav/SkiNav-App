@@ -188,7 +188,7 @@ const NavigationScreen = () => {
         setCurrentSpeechText("Travel along " + currentRoute[1].getName())
       }
       else{
-        setCurrentSpeechText("Travel along the slope")
+        setCurrentSpeechText("You have arrived at your destination")
       }
     }
   }, [currentRoute]);
